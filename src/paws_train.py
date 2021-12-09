@@ -20,6 +20,7 @@ except Exception:
 import logging
 import sys
 from collections import OrderedDict
+import wandb
 
 import numpy as np
 
@@ -63,6 +64,16 @@ torch.backends.cudnn.benchmark = True
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger()
 
+def init_wandb(project_name, entity_name, experiment_name, wandb_api_key):
+    """Initialize Wandb
+    Args:
+        project_name: project name on Wandb
+        experiment_name: experiment name on Wandb
+        wandb_api_key: Wandb API Key
+    """
+    if project_name is not None and experiment_name is not None and entity_name is not None:
+        os.environ['WANDB_API_KEY'] = wandb_api_key
+        wandb.init(project=project_name, entity=entity_name, name=experiment_name)
 
 def main(args):
 
@@ -361,6 +372,7 @@ def main(args):
 
         # -- logging/checkpointing
         logger.info('avg. loss %.3f' % loss_meter.avg)
+        wandb.log({"loss": loss_meter.avg, "epoch": epoch})
 
         if rank == 0:
             save_dict = {
@@ -385,6 +397,12 @@ def main(args):
                     or (epoch + 1) % 10 == 0 and epoch < checkpoint_freq:
                 torch.save(save_dict, save_path.format(epoch=f'{epoch + 1}'))
 
+init_wandb(
+    project_name='PAWS-reproducibilty',
+    entity_name='self-supervised-learning',
+    experiment_name='PAWS',
+    wandb_api_key='8f10e767919b4c5834c641a79b6ab0307b7f30df'
+)
 
 def load_checkpoint(
     r_path,

@@ -7,12 +7,14 @@
 
 import argparse
 import logging
+import os
 import pprint
 
 from collections import OrderedDict
 
 import numpy as np
 import torch
+import wandb
 
 import src.resnet as resnet
 import src.wide_resnet as wide_resnet
@@ -95,6 +97,16 @@ torch.backends.cudnn.benchmark = True
 
 pp = pprint.PrettyPrinter(indent=4)
 
+def init_wandb(project_name, entity_name, experiment_name, wandb_api_key):
+    """Initialize Wandb
+    Args:
+        project_name: project name on Wandb
+        experiment_name: experiment name on Wandb
+        wandb_api_key: Wandb API Key
+    """
+    if project_name is not None and experiment_name is not None and entity_name is not None:
+        os.environ['WANDB_API_KEY'] = wandb_api_key
+        wandb.init(project=project_name, entity=entity_name, name=experiment_name)
 
 def main(
     pretrained,
@@ -214,9 +226,16 @@ def evaluate_embeddings(
             logger.info('[%5d/%d] %.3f%% %.3f%%' % (itr, ipe, top1_acc, top5_acc))
 
     logger.info(f'top1/top5: {top1_acc}/{top5_acc}')
+    wandb.log({"Top-1": top1_acc, "Top-5": top5_acc})
 
     return top1_acc, top5_acc
 
+init_wandb(
+    project_name='PAWS-reproducibilty',
+    entity_name='self-supervised-learning',
+    experiment_name='PAWS',
+    wandb_api_key='8f10e767919b4c5834c641a79b6ab0307b7f30df'
+)
 
 def make_embeddings(
     device,
