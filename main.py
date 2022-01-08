@@ -83,11 +83,9 @@ def process_main(rank, sel, fname, world_size, devices):
         return snn_fine_tune(params)
 
 
+
 if __name__ == '__main__':
     args = parser.parse_args()
 
     num_gpus = len(args.devices)
-    mp.spawn(
-        process_main,
-        nprocs=num_gpus,
-        args=(args.sel, args.fname, num_gpus, args.devices))
+    process_main(0, args.sel, args.fname, 1, args.devices)
